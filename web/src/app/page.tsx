@@ -1,15 +1,17 @@
 import Link from "next/link";
-import { SanityDocument } from "next-sanity";
+import { defineQuery, type SanityDocument } from "next-sanity";
 
 import { sanityFetch } from "@/sanity/client";
+import { EVENTS_QUERYResult } from "@/sanity/types";
 
-const EVENTS_QUERY = `*[
+
+const EVENTS_QUERY = defineQuery(`*[
   _type == "event"
   && defined(slug.current)
-]{_id, name, slug, date}|order(date desc)`;
+]{_id, name, slug, date}|order(date desc)`);
 
 export default async function IndexPage() {
-  const events = await sanityFetch<SanityDocument[]>({query: EVENTS_QUERY});
+  const events = await sanityFetch<EVENTS_QUERYResult>({query: EVENTS_QUERY});
 
   return (
     <main className="flex bg-gray-100 min-h-screen flex-col p-24 gap-12">
@@ -24,12 +26,14 @@ export default async function IndexPage() {
           >
             <Link
               className="hover:underline"
-              href={`/events/${event.slug.current}`}
+              href={`/events/${event.slug?.current}`}
             >
               <h2 className="text-xl font-semibold">{event?.name}</h2>
-              <p className="text-gray-500">
-                {new Date(event?.date).toLocaleDateString()}
-              </p>
+              {event?.date ? (
+                  <p className="text-gray-500">
+                    {new Date(event.date).toLocaleDateString()}
+                  </p>
+                ) : null}
             </Link>
           </li>
         ))}

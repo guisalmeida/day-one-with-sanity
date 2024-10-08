@@ -1,19 +1,28 @@
-import { PortableText, type SanityDocument } from "next-sanity";
+import { defineQuery, PortableText, type SanityDocument } from "next-sanity";
 import imageUrlBuilder from "@sanity/image-url";
 
 import { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { client, sanityFetch } from "@/sanity/client";
 import Link from "next/link";
 import Image from "next/image";
+import { EVENT_QUERYResult } from "@/sanity/types";
 
-const EVENT_QUERY = `*[
-    _type == "event" &&
+const EVENT_QUERY = defineQuery(`*[
+  _type == "event" &&
     slug.current == $slug
   ][0]{
-  ...,
+  name,
+  date,
+  headline,
+  image,
+  details,
+  eventType,
+  doorsOpen,
+  venue,
+  tickets,
   headline->,
   venue->
-}`;
+}`);
 
 const { projectId, dataset } = client.config();
 const urlFor = (source: SanityImageSource) =>
@@ -21,15 +30,13 @@ const urlFor = (source: SanityImageSource) =>
     ? imageUrlBuilder({ projectId, dataset }).image(source)
     : null;
 
-export default async function EventPage({
-  params,
-}: {
-  params: { slug: string };
-}) {
-  const event = await sanityFetch<SanityDocument>({
+export default async function EventPage({params}: {params: { slug: string }}) {
+  
+  const event = await sanityFetch<EVENT_QUERYResult>({
     query: EVENT_QUERY,
     params,
   });
+
   const {
     name,
     date,
@@ -41,6 +48,7 @@ export default async function EventPage({
     venue,
     tickets,
   } = event;
+
   const eventImageUrl = image
     ? urlFor(image)?.width(550).height(310).url()
     : null;
